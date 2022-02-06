@@ -31,6 +31,7 @@ def save_image(ll, spn):
     map_file = "map.png"
     with open(map_file, "wb") as file:
         file.write(response.content)
+        file.close()
 
 
 save_image(ll, spn)
@@ -46,12 +47,13 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            spn = list(map(float, spn.split(',')))
             if event.key == pygame.K_PAGEUP:
+                spn = list(map(float, spn.split(',')))
                 spn = set_spn(spn, -1)
                 spn = ','.join(list((map(str, spn))))
                 save_image(ll, spn)
             elif event.key == pygame.K_PAGEDOWN:
+                spn = list(map(float, spn.split(',')))
                 spn = set_spn(spn, 1)
                 spn = ','.join(list((map(str, spn))))
                 save_image(ll, spn)
