@@ -16,7 +16,7 @@ class Example(QWidget):
         super().__init__()
         self.ll = '135,-30'
         self.spn = '35,35'
-        self.l = 'map'
+        self.map_type = 'map'
 
         self.image = QLabel(self)
         self.image.move(0, 50)
@@ -28,12 +28,13 @@ class Example(QWidget):
         self.btn = QPushButton(self, text='Искать')
         self.btn.clicked.connect(self.set_pos)
         self.btn.move(150, 5)
+        self.existing_points = []
 
         self.setFocus()
-        self.initUI()
+        self.init_ui()
 
-    def get_image(self, pt):
-        map_request = self.get_link(pt)
+    def get_image(self):
+        map_request = self.get_link()
         response = requests.get(map_request)
 
         if not response:
@@ -63,14 +64,20 @@ class Example(QWidget):
             y += dy
         self.ll = f'{y},{x}'
 
-    def set_l(self, l):
-        self.l = l
+    def set_l(self, map_type):
+        self.map_type = map_type
 
-    def get_link(self, pt=False):
-        if pt:
-            return f'https://static-maps.yandex.ru/1.x/?spn={self.spn}&l={self.l}&pt={self.ll},pmwtm1'
+    def get_link(self):
+        if len(self.existing_points) != 0:
+            points = []
+            for i in range(len(self.existing_points)):
+                point = [str(i) for i in (self.existing_points[i] + [i + 1])]
+                points.append(','.join(point))
+            str_point = '~'.join(points)
+            return f'https://static-maps.yandex.ru/1.x/?ll={self.ll}&spn={self.spn}&l={self.map_type}&pt={str_point}'
         else:
-            return f'https://static-maps.yandex.ru/1.x/?ll={self.ll}&spn={self.spn}&l={self.l}&pt={self.ll},pmwtm1'
+            return f'https://static-maps.yandex.ru/1.x/?ll={self.ll}&spn={self.spn}' \
+                   f'&l={self.map_type}'
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
         key = a0.key()
@@ -100,31 +107,41 @@ class Example(QWidget):
         response = requests.get(
             f"http://geocode-maps.yandex.ru/1.x/?apikey={APIKEY}&geocode={street}&format=json")
         data = response.json()
-        pos = data['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'].split(' ')
+        try:
+            pos = data['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'].split(' ')
+            self.existing_points.append(pos)
+        except Exception:
+            pos = self.ll.split(',')
         return pos
 
     def set_pos(self):
         street = self.entry.text()
         pos = self.get_street_pos(street)
         self.ll = ','.join(pos)
-        self.set_image(True)
+        self.setFocus()
+        self.set_image()
 
-    def set_image(self, pt=False):
-        self.get_image(pt)
+    def set_image(self):
+        self.get_image()
         self.pixmap = QPixmap('map.png')
         self.image.setPixmap(self.pixmap)
 
-    def initUI(self):
+    def init_ui(self):
         self.setGeometry(100, 100, *SCREEN_SIZE)
         self.setWindowTitle('Отображение карты')
-        self.set_image(False)
+        self.set_image()
 
     def closeEvent(self, event):
         os.remove(self.map_file)
 
 
+def except_hook(cls, exception, traceback):
+    sys.__excepthook__(cls, exception, traceback)
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = Example()
-    ex.show()
+    form = Example()
+    form.show()
+    sys.excepthook = except_hook
     sys.exit(app.exec())
