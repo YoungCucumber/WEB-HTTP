@@ -44,6 +44,7 @@ class Example(QWidget):
         if len(self.existing_points) != 0:
             self.existing_points.pop(-1)
             self.set_image()
+            self.full_address.setText('')
 
     def get_image(self):
         map_request = self.get_link()
