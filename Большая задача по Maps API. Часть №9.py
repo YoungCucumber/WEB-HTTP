@@ -156,7 +156,10 @@ class Example(QWidget):
         street = self.entry.text()
         pos, fa, index = self.get_street_info(street)
         self.ll = ','.join(pos)
-        self.full_address.setText(fa + ', ' + index)
+        if index != '':
+            self.full_address.setText(fa + ', ' + index)
+        else:
+            self.full_address.setText(fa)
         self.full_address.adjustSize()
         self.setFocus()
         self.set_image()
